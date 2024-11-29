@@ -1,0 +1,4 @@
+ID ANIMAL;Nombre Animal;Vacuno Bufalo;Categoria;ID Madre;Nombre Madre;ID Padre;fecha nacimiento;dias nacido;meses nacido;peso al nacer;fecha 1er parto;fecha ultimo parto;Fecha parto anterior;nro de partos;color;Raza;ultimo peso;Valor kilo
+A01-04;NEGRA;V;CH;A01;CELIA;M01;2/12/2002;1299;160;30;2/12/2020;2/12/2020;2/12/2020;0;BLANCO;Criolla;450;6000
+A01-05;;V;CM;;;;3/12/2002;;;;;3/12/2020;;;ROJO;Criolla;430;6000
+A01-06;NEGRA;V;VP;A01;CELIA;M01;4/12/2002;1222;67;35;2/05/2010;2/05/2020;2/05/2020;2;CAFÉ;Criollo;440;6500
