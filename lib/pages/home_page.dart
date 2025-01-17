@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 16, fontWeight: FontWeight.w500)),
                     ),
                     Expanded(
-                      child: Text('Nombre de la finca',
+                      child: Text('Nombre finca',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w500)),
                     ),
