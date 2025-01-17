@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import './births_create.dart';
+import './destete_create.dart';
 
-class BirthsMadresPage extends StatefulWidget {
+class DesteteCriasPage extends StatefulWidget {
   final int fincaId;
   final String nombreFinca;
   final String userId;
 
-  const BirthsMadresPage({
+  const DesteteCriasPage({
     Key? key,
     required this.fincaId,
     required this.nombreFinca,
@@ -15,43 +15,43 @@ class BirthsMadresPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<BirthsMadresPage> createState() => _BirthsMadresPageState();
+  State<DesteteCriasPage> createState() => _DesteteCriasPageState();
 }
 
-class _BirthsMadresPageState extends State<BirthsMadresPage> {
+class _DesteteCriasPageState extends State<DesteteCriasPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _allMothers = [];
-  List<Map<String, dynamic>> _filteredMothers = [];
+  List<Map<String, dynamic>> _allCrias = [];
+  List<Map<String, dynamic>> _filteredCrias = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchMothers();
+    _fetchCrias();
   }
 
-  Future<void> _fetchMothers() async {
+  Future<void> _fetchCrias() async {
     final response = await Supabase.instance.client
         .from('dbanimal')
-        .select('sid_animal, snom_animal, scategoria')
+        .select('sid_animal, snom_animal, scategoria, sid_madre')
         .eq('n_finca', widget.fincaId)
-        .or('scategoria.eq.HS,scategoria.eq.HV');
+        .or('scategoria.eq.CH,scategoria.eq.CM');
 
     setState(() {
-      _allMothers = (response as List).cast<Map<String, dynamic>>();
-      _filteredMothers = _allMothers;
+      _allCrias = (response as List).cast<Map<String, dynamic>>();
+      _filteredCrias = _allCrias;
     });
   }
 
-  void _filterMothers(String query) {
+  void _filterCrias(String query) {
     if (query.isEmpty) {
-      setState(() => _filteredMothers = _allMothers);
+      setState(() => _filteredCrias = _allCrias);
       return;
     }
 
     setState(() {
-      _filteredMothers = _allMothers.where((mother) {
+      _filteredCrias = _allCrias.where((Cria) {
         final searchString =
-            '${mother['sid_animal']}-${mother['snom_animal']}-${mother['scategoria']}'
+            '${Cria['sid_animal']}-${Cria['snom_animal']}-${Cria['scategoria']}-${Cria['sid_madre']}'
                 .toLowerCase();
         return searchString.contains(query.toLowerCase());
       }).toList();
@@ -64,7 +64,7 @@ class _BirthsMadresPageState extends State<BirthsMadresPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1B4D3E),
         title: const Text(
-          'Seleccionar Madre',
+          'Seleccionar Cría',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
@@ -74,7 +74,7 @@ class _BirthsMadresPageState extends State<BirthsMadresPage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
-              onChanged: _filterMothers,
+              onChanged: _filterCrias,
               decoration: InputDecoration(
                 hintText: 'Buscar...',
                 prefixIcon: const Icon(Icons.search),
@@ -89,14 +89,14 @@ class _BirthsMadresPageState extends State<BirthsMadresPage> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: _filteredMothers.length,
+              itemCount: _filteredCrias.length,
               itemBuilder: (context, index) {
-                final mother = _filteredMothers[index];
+                final Cria = _filteredCrias[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     title: Text(
-                      '${mother['sid_animal']} - ${mother['snom_animal']} - ${mother['scategoria']}',
+                      '${Cria['sid_animal']} - ${Cria['snom_animal']} - ${Cria['scategoria']} - ${Cria['sid_madre']}',
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     trailing: IconButton(
@@ -105,11 +105,12 @@ class _BirthsMadresPageState extends State<BirthsMadresPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => BirthsRegistrationPage(
+                            builder: (context) => DesteteCreatePage(
                               arguments: {
-                                'motherId': mother['sid_animal'],
-                                'snom_animal': mother['snom_animal'],
-                                'scategoria': mother['scategoria'],
+                                'CriaId': Cria['sid_animal'],
+                                'snom_animal': Cria['snom_animal'],
+                                'scategoria': Cria['scategoria'],
+                                'madreId': Cria['sid_madre'],
                                 'fincaId': widget.fincaId,
                                 'nombreFinca': widget.nombreFinca,
                                 'userId': widget.userId,

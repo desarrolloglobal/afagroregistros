@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'offline_state_manager.dart';
-import 'births_page.dart';
+import 'births_mothers.dart';
+import 'destete_crias.dart';
 
 class MenuReclasificaPage extends StatelessWidget {
   final int fincaId;
   final String nombreFinca;
 
+  String get userId =>
+      OfflineStateManager().currentUserId ??
+      Supabase.instance.client.auth.currentUser!.id;
+
   MenuReclasificaPage({
     required this.fincaId,
     required this.nombreFinca,
   });
-
-  String get userId =>
-      OfflineStateManager().currentUserId ??
-      Supabase.instance.client.auth.currentUser!.id;
 
   Widget _buildMenuButton({
     required String title,
@@ -85,10 +86,6 @@ class MenuReclasificaPage extends StatelessWidget {
                             'Finca: $fincaId $nombreFinca $userId',
                             style: TextStyle(fontSize: 16),
                           ),
-                          // Text(
-                          //   'Usuario ID: $userId',
-                          //   style: TextStyle(fontSize: 16),
-                          // ),
                         ],
                       ),
                     ),
@@ -110,9 +107,10 @@ class MenuReclasificaPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BirthsPage(
+                          builder: (context) => BirthsMadresPage(
                             fincaId: fincaId,
                             nombreFinca: nombreFinca,
+                            userId: userId,
                           ),
                         ),
                       );
@@ -122,7 +120,16 @@ class MenuReclasificaPage extends StatelessWidget {
                     title: 'Destetes',
                     icon: Icons.family_restroom,
                     onPressed: () {
-                      // Navigate to weaning page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DesteteCriasPage(
+                            fincaId: fincaId,
+                            nombreFinca: nombreFinca,
+                            userId: userId,
+                          ),
+                        ),
+                      );
                     },
                   ),
                   _buildMenuButton(

@@ -4,6 +4,7 @@ import 'offline_state_manager.dart';
 import 'cargar_inventario.dart';
 import 'lista_animales.dart';
 import 'menu_reclasifica.dart';
+import 'movimientos_page.dart';
 
 class MenuFincaPage extends StatelessWidget {
   final int fincaId;
@@ -175,7 +176,16 @@ class MenuFincaPage extends StatelessWidget {
                     title: 'Reportes',
                     icon: Icons.assessment,
                     onPressed: () {
-                      // Navigate to reports page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MovimientosPage(
+                            fincaId: fincaId,
+                            nombreFinca: nombreFinca,
+                            userId: userId,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ],

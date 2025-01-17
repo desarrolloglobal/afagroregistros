@@ -17,7 +17,8 @@ class ListaAnimalesPage extends StatefulWidget {
 
 class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
   final supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> animales = [];
+  Map<String, List<Map<String, dynamic>>> animalesPorCategoria = {};
+  Map<String, String> nombresCategoria = {};
   bool isLoading = true;
 
   @override
@@ -28,13 +29,43 @@ class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
 
   Future<void> cargarAnimales() async {
     try {
+      // Primero obtenemos los nombres de las categorías
+      final tiposResponse =
+          await supabase.from('ts_tipoanimal').select('idtipoa, nomtipovacuno');
+
+      // Creamos un mapa de ID a nombre de categoría
+      nombresCategoria = Map.fromEntries((tiposResponse as List).map((tipo) =>
+          MapEntry(
+              tipo['idtipoa'].toString(), tipo['nomtipovacuno'].toString())));
+
+      // Luego cargamos los animales
       final response = await supabase
           .from('dbanimal')
           .select('sid_animal, snom_animal, scategoria')
           .eq('n_finca', widget.fincaId);
 
+      final List<Map<String, dynamic>> animales =
+          List<Map<String, dynamic>>.from(response);
+
+      // Organizar animales por categoría
+      final Map<String, List<Map<String, dynamic>>> tempMap = {};
+      for (var animal in animales) {
+        final categoria = animal['scategoria'] as String;
+        if (!tempMap.containsKey(categoria)) {
+          tempMap[categoria] = [];
+        }
+        tempMap[categoria]!.add(animal);
+      }
+
+      // Ordenar cada lista por ID
+      tempMap.forEach((key, value) {
+        value.sort((a, b) =>
+            a['sid_animal'].toString().compareTo(b['sid_animal'].toString()));
+      });
+
       setState(() {
-        animales = List<Map<String, dynamic>>.from(response);
+        animalesPorCategoria = Map.fromEntries(
+            tempMap.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
         isLoading = false;
       });
     } catch (error) {
@@ -52,15 +83,79 @@ class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
     }
   }
 
+  Widget _buildCategoriaSection(
+      String categoriaId, List<Map<String, dynamic>> animales) {
+    final nombreCategoria =
+        nombresCategoria[categoriaId] ?? 'Categoría Desconocida';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          color: Color(0xFF1B4D3E).withOpacity(0.1),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nombreCategoria,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    Text(
+                      'Código: $categoriaId',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF1B4D3E).withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${animales.length} animales',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: animales.length,
+          itemBuilder: (context, index) => _buildAnimalCard(animales[index]),
+        ),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _buildAnimalCard(Map<String, dynamic> animal) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 8),
       child: Material(
         color: Color(0xFF1B4D3E),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () {
-            // Aquí irá la navegación a la página de detalles del animal
+            // Navegación a detalles del animal
           },
           borderRadius: BorderRadius.circular(12),
           child: Container(
@@ -71,30 +166,14 @@ class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
                   flex: 1,
                   child: Text(
                     '${animal['sid_animal']}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text(
                     '${animal['snom_animal']}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '${animal['scategoria']}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ),
               ],
@@ -104,6 +183,9 @@ class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
       ),
     );
   }
+
+  int get totalAnimales =>
+      animalesPorCategoria.values.fold(0, (sum, list) => sum + list.length);
 
   @override
   Widget build(BuildContext context) {
@@ -132,67 +214,45 @@ class _ListaAnimalesPageState extends State<ListaAnimalesPage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Finca: ${widget.fincaId} ${widget.nombreFinca}',
-                      style: TextStyle(fontSize: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Finca: ${widget.fincaId} ${widget.nombreFinca}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Total de animales: $totalAnimales',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 SizedBox(height: 24),
-                // Encabezados de columnas
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          'ID',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'NOMBRE',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'CATEGORÍA',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12),
                 Expanded(
                   child: isLoading
                       ? Center(child: CircularProgressIndicator())
-                      : animales.isEmpty
+                      : animalesPorCategoria.isEmpty
                           ? Center(
                               child: Text(
                                 'No hay animales registrados',
                                 style: TextStyle(fontSize: 16),
                               ),
                             )
-                          : ListView.builder(
-                              itemCount: animales.length,
-                              itemBuilder: (context, index) {
-                                return _buildAnimalCard(animales[index]);
-                              },
+                          : ListView(
+                              children:
+                                  animalesPorCategoria.entries.map((entry) {
+                                return _buildCategoriaSection(
+                                  entry.key,
+                                  entry.value,
+                                );
+                              }).toList(),
                             ),
                 ),
               ],
