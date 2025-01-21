@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('ID finca',
+                      child: Text('ID Finca',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w500)),
                     ),
